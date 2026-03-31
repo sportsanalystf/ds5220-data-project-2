@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: eia-pipeline
+  namespace: default
+spec:
+  schedule: "0 * * * *"       # runs at the top of every hour
+  concurrencyPolicy: Forbid   # skip a run if the previous one is still going
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: pipeline
+              # Replace with your GHCR username before applying
+              image: ghcr.io/USERNAME/ds5220-pipeline:latest
+              imagePullPolicy: Always
+              env:
+                # EIA_API_KEY is pulled from the Kubernetes Secret you created with:
+                #   kubectl create secret generic eia-secret --from-literal=EIA_API_KEY=...
+                - name: EIA_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: eia-secret
+                      key: EIA_API_KEY
+
+                # Change EIA_RESPONDENT to whichever balancing authority you chose.
+                # Valid codes: PJM, MISO, ERCO, NYIS, CISO, ISNE, SWPP
+                - name: EIA_RESPONDENT
+                  value: "PJM"
+
+                # TODO: replace with your S3 bucket name
+                - name: S3_BUCKET
+                  value: "your-bucket-name"
+
