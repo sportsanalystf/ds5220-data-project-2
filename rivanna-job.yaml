@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rivanna-tracker
+  namespace: default
+spec:
+  schedule: "*/30 * * * *"     # runs every 30 minutes → 144+ points in 72 hours
+  concurrencyPolicy: Forbid     # skip a run if the previous one is still going
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: rivanna-tracker
+              image: ghcr.io/sportsanalystf/rivanna-tracker:latest
+              imagePullPolicy: Always
+              env:
+                - name: DYNAMODB_TABLE
+                  value: "rivanna-tracking"
+                - name: S3_BUCKET
+                  value: "your-bucket-name"
+                - name: AWS_REGION
+                  value: "us-east-1"

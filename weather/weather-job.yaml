@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: weather-tracker
+  namespace: default
+spec:
+  schedule: "0 * * * *"       # runs every hour on the hour
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: weather-tracker
+              image: ghcr.io/sportsanalystf/ds5220-weather:latest
+              imagePullPolicy: Always
+              env:
+                - name: DYNAMODB_TABLE
+                  value: "weather-tracking"
+                - name: S3_BUCKET
+                  value: "amzn-s3-ds5220-dp2"
+                - name: AWS_REGION
+                  value: "us-east-1"
